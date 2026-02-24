@@ -1,0 +1,15 @@
+[submodule "highdicom"]
+	path = highdicom
+	url = https://github.com/ImagingDataCommons/highdicom.git
+[submodule "dcmjs"]
+	path = dcmjs
+	url = https://github.com/dcmjs-org/dcmjs
+[submodule "dcmqi"]
+	path = dcmqi
+	url = https://github.com/QIICR/dcmqi
+[submodule "pixelmed"]
+	path = pixelmed
+	url = https://github.com/fedorov/pixelmed.git
+[submodule "dcmtk"]
+	path = dcmtk
+	url = https://github.com/DCMTK/dcmtk

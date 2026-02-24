@@ -19,19 +19,19 @@ The standard specifies for 1-bit-per-pixel data:
 
 ### 1. HIGHDICOM (Python) — WRITING
 
-**Files**: [sop.py:1237-1296](highdicom/src/highdicom/seg/sop.py#L1237-L1296), [sop.py:2111-2130](highdicom/src/highdicom/seg/sop.py#L2111-L2130)
+**Files**: [sop.py:1237-1296](https://github.com/ImagingDataCommons/highdicom/blob/e9e3f251/src/highdicom/seg/sop.py#L1237-L1296), [sop.py:2111-2130](https://github.com/ImagingDataCommons/highdicom/blob/e9e3f251/src/highdicom/seg/sop.py#L2111-L2130)
 
 **Approach**: Uses a `remainder_pixels` accumulator. For each frame, concatenates leftover pixels from the previous frame with the current frame's pixels, then takes the largest multiple-of-8 chunk for encoding, carrying the leftover forward. Calls `pydicom.pack_bits(planes, pad=False)`.
 
 **Verdict: COMPLIANT** — Bits are correctly packed continuously across frame boundaries. The remainder mechanism ensures no per-frame padding.
 
-**Bug found (minor)**: At [sop.py:1296](highdicom/src/highdicom/seg/sop.py#L1296), the trailing padding byte is `b'0'` (ASCII 0x30) instead of `b'\x00'` (null byte). While the DICOM standard says applications must not assume anything about padding bit contents, using a non-zero ASCII character is unconventional and could cause issues with strict parsers.
+**Bug found (minor)**: At [sop.py:1296](https://github.com/ImagingDataCommons/highdicom/blob/e9e3f251/src/highdicom/seg/sop.py#L1296), the trailing padding byte is `b'0'` (ASCII 0x30) instead of `b'\x00'` (null byte). While the DICOM standard says applications must not assume anything about padding bit contents, using a non-zero ASCII character is unconventional and could cause issues with strict parsers.
 
-**Condition note**: At [sop.py:1242](highdicom/src/highdicom/seg/sop.py#L1242), the condition `(self.Rows * self.Columns) // 8 != 0` uses integer division (`//`) rather than modulo (`%`). This means the condition is True whenever Rows×Columns >= 8 (virtually always), so the continuous packing logic is effectively always used. The condition should probably be `% 8 != 0` for clarity, but as-is it doesn't cause a functional bug.
+**Condition note**: At [sop.py:1242](https://github.com/ImagingDataCommons/highdicom/blob/e9e3f251/src/highdicom/seg/sop.py#L1242), the condition `(self.Rows * self.Columns) // 8 != 0` uses integer division (`//`) rather than modulo (`%`). This means the condition is True whenever Rows×Columns >= 8 (virtually always), so the continuous packing logic is effectively always used. The condition should probably be `% 8 != 0` for clarity, but as-is it doesn't cause a functional bug.
 
 ### 2. HIGHDICOM (Python) — READING
 
-**Files**: [frame.py:441-446](highdicom/src/highdicom/frame.py#L441-L446), [io.py:586-597](highdicom/src/highdicom/io.py#L586-L597), [io.py:655-663](highdicom/src/highdicom/io.py#L655-L663), [image.py:2657-2666](highdicom/src/highdicom/image.py#L2657-L2666)
+**Files**: [frame.py:441-446](https://github.com/ImagingDataCommons/highdicom/blob/e9e3f251/src/highdicom/frame.py#L441-L446), [io.py:586-597](https://github.com/ImagingDataCommons/highdicom/blob/e9e3f251/src/highdicom/io.py#L586-L597), [io.py:655-663](https://github.com/ImagingDataCommons/highdicom/blob/e9e3f251/src/highdicom/io.py#L655-L663), [image.py:2657-2666](https://github.com/ImagingDataCommons/highdicom/blob/e9e3f251/src/highdicom/image.py#L2657-L2666)
 
 **Approach for frame extraction** (`image.py`):
 - When `BitsAllocated == 1` and `n_pixels % 8 != 0`: computes byte offsets using `start = (frame_index * frame_length_bits) // 8` and `end = ((frame_index + 1) * frame_length_bits + 7) // 8`, correctly extracting the overlapping bytes from the continuous bitstream.
@@ -48,7 +48,7 @@ The standard specifies for 1-bit-per-pixel data:
 
 ### 3. DCMJS (JavaScript) — WRITING
 
-**Files**: [bitArray.js:28-59](dcmjs/src/bitArray.js#L28-L59), [Segmentation.js:112-141](dcmjs/src/derivations/Segmentation.js#L112-L141)
+**Files**: [bitArray.js:28-59](https://github.com/dcmjs-org/dcmjs/blob/44277286/src/bitArray.js#L28-L59), [Segmentation.js:112-141](https://github.com/dcmjs-org/dcmjs/blob/44277286/src/derivations/Segmentation.js#L112-L141)
 
 **Approach**: Allocates a single unpacked buffer for ALL frames (`Rows * Columns * NumberOfFrames` bytes), fills in frame data at linear byte offsets, then calls `BitArray.pack()` on the entire buffer at once.
 
@@ -58,7 +58,7 @@ The standard specifies for 1-bit-per-pixel data:
 
 ### 4. DCMJS (JavaScript) — READING
 
-**Files**: [Segmentation_4X.js:348,1091-1106](dcmjs/src/adapters/Cornerstone/Segmentation_4X.js#L1091-L1106), [bitArray.js:64-76](dcmjs/src/bitArray.js#L64-L76), [Segmentation_4X.js:626-631](dcmjs/src/adapters/Cornerstone/Segmentation_4X.js#L626-L631)
+**Files**: [Segmentation_4X.js:348,1091-1106](https://github.com/dcmjs-org/dcmjs/blob/44277286/src/adapters/Cornerstone/Segmentation_4X.js#L1091-L1106), [bitArray.js:64-76](https://github.com/dcmjs-org/dcmjs/blob/44277286/src/bitArray.js#L64-L76), [Segmentation_4X.js:626-631](https://github.com/dcmjs-org/dcmjs/blob/44277286/src/adapters/Cornerstone/Segmentation_4X.js#L626-L631)
 
 **Approach**: Calls `BitArray.unpack()` on the entire PixelData, producing a byte-per-pixel array of length `8 * ceil(totalPixels/8)`. Then accesses frame data using `frameSegment * sliceLength` where `sliceLength = Rows * Columns`.
 
@@ -66,7 +66,7 @@ The standard specifies for 1-bit-per-pixel data:
 
 ### 5. DCMTK (C++) — WRITING
 
-**Files**: [segutils.h:118-168](dcmtk/dcmseg/include/dcmtk/dcmseg/segutils.h#L118-L168), [segutils.cc:30-98](dcmtk/dcmseg/libsrc/segutils.cc#L30-L98)
+**Files**: [segutils.h:118-168](https://github.com/DCMTK/dcmtk/blob/387563d4/dcmseg/include/dcmtk/dcmseg/segutils.h#L118-L168), [segutils.cc:30-98](https://github.com/DCMTK/dcmtk/blob/387563d4/dcmseg/libsrc/segutils.cc#L30-L98)
 
 **Approach**: Each frame is first packed individually via `packBinaryFrame()` (producing per-frame padded byte arrays). Then `concatBinaryFrames()` reassembles all frames into a single continuous bitstream using a persistent `bitIndex` counter across all frames.
 
@@ -78,7 +78,7 @@ Total size: `(totalBits + 7) / 8` — single rounding at the end.
 
 ### 6. DCMTK (C++) — READING
 
-**Files**: [iodutil.cc:690-794](dcmtk/dcmiod/libsrc/iodutil.cc#L690-L794)
+**Files**: [iodutil.cc:690-794](https://github.com/DCMTK/dcmtk/blob/387563d4/dcmiod/libsrc/iodutil.cc#L690-L794)
 
 **Approach**: `extractBinaryFrames()` iterates over all bits in the continuous PixelData using a single loop with `bitsLeftInInputByte`, `bitsLeftInFrame`, and `bitsLeftInTargetByte` counters. When a frame boundary is reached (mid-byte), it resets frame-level counters while continuing to read from the same input byte position.
 
@@ -88,7 +88,7 @@ Each extracted frame gets its own byte array with per-frame padding (last byte p
 
 ### 7. DCMQI (C++) — Delegates to DCMTK
 
-**Files**: [Itk2DicomConverter.cpp](dcmqi/libsrc/Itk2DicomConverter.cpp) (writing), [Dicom2ItkConverter.cpp:153-157](dcmqi/libsrc/Dicom2ItkConverter.cpp#L153-L157) (reading)
+**Files**: [Itk2DicomConverter.cpp](https://github.com/QIICR/dcmqi/blob/45ae4140/libsrc/Itk2DicomConverter.cpp) (writing), [Dicom2ItkConverter.cpp:153-157](https://github.com/QIICR/dcmqi/blob/45ae4140/libsrc/Dicom2ItkConverter.cpp#L153-L157) (reading)
 
 Uses DCMTK's `DcmSegUtils::packBinaryFrame()` / `DcmSegUtils::unpackBinaryFrame()` and `DcmSegmentation::addFrame()` / `DcmSegmentation::getFrame()`.
 
@@ -96,7 +96,7 @@ Uses DCMTK's `DcmSegUtils::packBinaryFrame()` / `DcmSegUtils::unpackBinaryFrame(
 
 ### 8. PIXELMED (Java) — WRITING
 
-**Files**: [IndexedLabelMapToSegmentation.java:308-315](pixelmed/com/pixelmed/convert/IndexedLabelMapToSegmentation.java#L308-L315), [IndexedLabelMapToSegmentation.java:490-504](pixelmed/com/pixelmed/convert/IndexedLabelMapToSegmentation.java#L490-L504)
+**Files**: [IndexedLabelMapToSegmentation.java:308-315](https://github.com/fedorov/pixelmed/blob/f9b78447/com/pixelmed/convert/IndexedLabelMapToSegmentation.java#L308-L315), [IndexedLabelMapToSegmentation.java:490-504](https://github.com/fedorov/pixelmed/blob/f9b78447/com/pixelmed/convert/IndexedLabelMapToSegmentation.java#L490-L504)
 
 **Approach**: Allocates a single byte array for ALL frames. Uses `setBit()` with a global pixel offset: `pixelOffset = pixelsPerFrame * f + columns * r + c`. Size: `dstPixelCount/8` rounded up, then rounded up to even.
 
@@ -104,7 +104,7 @@ Uses DCMTK's `DcmSegUtils::packBinaryFrame()` / `DcmSegUtils::unpackBinaryFrame(
 
 ### 9. PIXELMED (Java) — READING
 
-**Files**: [ShrinkSegmentationToBoundingBox.java:318-325](pixelmed/com/pixelmed/apps/ShrinkSegmentationToBoundingBox.java#L318-L325)
+**Files**: [ShrinkSegmentationToBoundingBox.java:318-325](https://github.com/fedorov/pixelmed/blob/f9b78447/com/pixelmed/apps/ShrinkSegmentationToBoundingBox.java#L318-L325)
 
 **Approach**: `getBit()` uses the same global pixel offset formula as `setBit()`.
 
@@ -113,10 +113,10 @@ Uses DCMTK's `DcmSegUtils::packBinaryFrame()` / `DcmSegUtils::unpackBinaryFrame(
 ### 10. WEASIS (Java) — READING (via dcm4che3/weasis-dicom-tools)
 
 **Files**:
-- [DicomMediaIO.java:654-688](Weasis/weasis-dicom/weasis-dicom-codec/src/main/java/org/weasis/dicom/codec/DicomMediaIO.java#L654-L688) — frame reading entry point
-- [SegSpecialElement.java](Weasis/weasis-dicom/weasis-dicom-codec/src/main/java/org/weasis/dicom/codec/SegSpecialElement.java) — segmentation metadata handling
-- [PhotometricInterpretation.java:196-198](dcm4che/dcm4che-image/src/main/java/org/dcm4che3/image/PhotometricInterpretation.java#L196-L198) (dcm4che3) — frame byte length calculation
-- [DicomImageReader.java:776-787](weasis-dicom-tools/weasis-dicom-tools/src/main/java/org/dcm4che3/img/DicomImageReader.java#L776-L787) (weasis-dicom-tools) — frame offset computation
+- [DicomMediaIO.java:654-688](https://github.com/nroduit/Weasis/blob/122a558b/weasis-dicom/weasis-dicom-codec/src/main/java/org/weasis/dicom/codec/DicomMediaIO.java#L654-L688) — frame reading entry point
+- [SegSpecialElement.java](https://github.com/nroduit/Weasis/blob/122a558b/weasis-dicom/weasis-dicom-codec/src/main/java/org/weasis/dicom/codec/SegSpecialElement.java) — segmentation metadata handling
+- [PhotometricInterpretation.java:196-198](https://github.com/dcm4che/dcm4che/blob/8be67b1d/dcm4che-image/src/main/java/org/dcm4che3/image/PhotometricInterpretation.java#L196-L198) (dcm4che3) — frame byte length calculation
+- [DicomImageReader.java:776-787](https://github.com/nroduit/weasis-dicom-tools/blob/841b96a8/weasis-dicom-tools/src/main/java/org/dcm4che3/img/DicomImageReader.java#L776-L787) (weasis-dicom-tools) — frame offset computation
 
 **Architecture**: Weasis itself does NOT implement bit unpacking. It delegates to:
 1. **dcm4che3** (via weasis-dicom-tools v5.34.1.2) for DICOM pixel data reading
@@ -204,8 +204,8 @@ However, the segmentations in highdicom issue #393 were **created by highdicom**
 
 ## Minor Issues Found
 
-1. **highdicom** [sop.py:1296](highdicom/src/highdicom/seg/sop.py#L1296): Padding byte `b'0'` should be `b'\x00'`. The current code appends ASCII character '0' (0x30) instead of a null byte. While the DICOM standard says receivers must not assume padding bit contents, this is clearly a typo/bug.
-2. **highdicom** [sop.py:1242](highdicom/src/highdicom/seg/sop.py#L1242): Condition `(self.Rows * self.Columns) // 8 != 0` uses integer division (`//`) where modulo (`%`) was likely intended. Current behavior: enters continuous-packing branch for any image >= 8 pixels (always). Intended behavior: enter it only when frame size is not byte-aligned. Functionally equivalent for all realistic images, but misleading.
+1. **highdicom** [sop.py:1296](https://github.com/ImagingDataCommons/highdicom/blob/e9e3f251/src/highdicom/seg/sop.py#L1296): Padding byte `b'0'` should be `b'\x00'`. The current code appends ASCII character '0' (0x30) instead of a null byte. While the DICOM standard says receivers must not assume padding bit contents, this is clearly a typo/bug.
+2. **highdicom** [sop.py:1242](https://github.com/ImagingDataCommons/highdicom/blob/e9e3f251/src/highdicom/seg/sop.py#L1242): Condition `(self.Rows * self.Columns) // 8 != 0` uses integer division (`//`) where modulo (`%`) was likely intended. Current behavior: enters continuous-packing branch for any image >= 8 pixels (always). Intended behavior: enter it only when frame size is not byte-aligned. Functionally equivalent for all realistic images, but misleading.
 
 ## Conclusions
 

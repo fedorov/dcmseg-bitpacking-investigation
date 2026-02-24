@@ -4,7 +4,7 @@
 
 This investigation is triggered by [highdicom issue #393](https://github.com/ImagingDataCommons/highdicom/issues/393), where a user reports that binary segmentations with dimensions not divisible by 8 (specifically 187×239) show "frames increasingly shifted in the X axis as slice number increases" when viewed in 3D Slicer, MicroDicom, and Weasis. OHIF renders correctly.
 
-The five libraries analyzed are at the versions checked into this repository's submodules, which represent very recent (late 2024/2025) versions.
+The libraries analyzed are at the versions checked into this repository's submodules, which represent very recent (late 2024/2025) versions. Weasis's external dependencies (dcm4che3 and weasis-dicom-tools) are also included as submodules.
 
 ## DICOM Standard Requirements (Part 5, [Section 8.1.1](https://dicom.nema.org/medical/dicom/current/output/chtml/part05/chapter_8.html#sect_8.1.1))
 
@@ -115,8 +115,8 @@ Uses DCMTK's `DcmSegUtils::packBinaryFrame()` / `DcmSegUtils::unpackBinaryFrame(
 **Files**:
 - [DicomMediaIO.java:654-688](Weasis/weasis-dicom/weasis-dicom-codec/src/main/java/org/weasis/dicom/codec/DicomMediaIO.java#L654-L688) — frame reading entry point
 - [SegSpecialElement.java](Weasis/weasis-dicom/weasis-dicom-codec/src/main/java/org/weasis/dicom/codec/SegSpecialElement.java) — segmentation metadata handling
-- dcm4che3 `PhotometricInterpretation.frameLength()` ([source](https://github.com/dcm4che/dcm4che/blob/master/dcm4che-image/src/main/java/org/dcm4che3/image/PhotometricInterpretation.java)) — frame byte length calculation
-- weasis-dicom-tools `DicomImageReader.buildBulkDataStream()` ([source](https://github.com/nroduit/weasis-dicom-tools/blob/master/weasis-dicom-tools/src/main/java/org/dcm4che3/img/DicomImageReader.java)) — frame offset computation
+- [PhotometricInterpretation.java:196-198](dcm4che/dcm4che-image/src/main/java/org/dcm4che3/image/PhotometricInterpretation.java#L196-L198) (dcm4che3) — frame byte length calculation
+- [DicomImageReader.java:776-787](weasis-dicom-tools/weasis-dicom-tools/src/main/java/org/dcm4che3/img/DicomImageReader.java#L776-L787) (weasis-dicom-tools) — frame offset computation
 
 **Architecture**: Weasis itself does NOT implement bit unpacking. It delegates to:
 1. **dcm4che3** (via weasis-dicom-tools v5.34.1.2) for DICOM pixel data reading

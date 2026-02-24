@@ -16,3 +16,9 @@
 [submodule "Weasis"]
 	path = Weasis
 	url = https://github.com/nroduit/Weasis
+[submodule "dcm4che"]
+	path = dcm4che
+	url = https://github.com/dcm4che/dcm4che.git
+[submodule "weasis-dicom-tools"]
+	path = weasis-dicom-tools
+	url = https://github.com/nroduit/weasis-dicom-tools.git
